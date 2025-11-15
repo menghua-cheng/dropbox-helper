@@ -1,0 +1,31 @@
+{
+  "DropboxCameraUploadsPath": "%USERPROFILE%\\Dropbox\\Camera Uploads",
+  "BackupDestinationPath": "%USERPROFILE%\\Documents\\CameraBackup",
+  "FileStabilityWaitSeconds": 30,
+  "CheckIntervalSeconds": 5,
+  "SupportedExtensions": [
+    ".jpg",
+    ".jpeg",
+    ".png",
+    ".heic",
+    ".heif",
+    ".mp4",
+    ".mov",
+    ".avi",
+    ".3gp",
+    ".m4v"
+  ],
+  "EnableLogging": true,
+  "LogPath": "%APPDATA%\\DropboxHelper\\logs",
+  "MoveOrCopy": "Move",
+  "PreserveDirectoryStructure": true,
+  "MaxLogAgeDays": 30,
+  "RetryAttempts": 3,
+  "RetryDelaySeconds": 5,
+  "TransportMethod": "Local",
+  "SSHHost": "",
+  "SSHUser": "",
+  "SSHPort": 22,
+  "SSHKeyPath": "",
+  "SSHRemotePath": "/photos/user1/camera uploads/"
+}
