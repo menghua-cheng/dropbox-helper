@@ -92,6 +92,7 @@ function Initialize-Configuration {
                 MoveOrCopy = 'Move'
                 PreserveDirectoryStructure = $true
                 ConflictResolutionStrategy = 'Timestamp'
+                MinHoursBeforeMove = 48
                 MaxLogAgeDays = 30
                 RetryAttempts = 3
                 RetryDelaySeconds = 5
@@ -2037,6 +2038,24 @@ function Invoke-FileProcessing {
             }
         }
         
+        # Step 4.5: Check minimum hours before move
+        $config = Get-Configuration
+        if ($config -and $config.MinHoursBeforeMove -and $config.MinHoursBeforeMove -gt 0) {
+            $fileItem = Get-Item -LiteralPath $filePath
+            $fileAge = (Get-Date) - $fileItem.CreationTime
+            $minHours = $config.MinHoursBeforeMove
+
+            if ($fileAge.TotalHours -lt $minHours) {
+                $remainingHours = [math]::Round($minHours - $fileAge.TotalHours, 1)
+                Write-LogInfo "File is too recent to move (age: $([math]::Round($fileAge.TotalHours, 1))h, required: ${minHours}h, remaining: ${remainingHours}h): $filePath"
+                # Re-queue the file for later processing
+                Add-ToFileQueue -FileInfo $FileInfo
+                return $false
+            }
+
+            Write-LogInfo "File age check passed ($([math]::Round($fileAge.TotalHours, 1))h >= ${minHours}h): $filePath"
+        }
+
         # Step 5: Move to backup (using configured transport method)
         $moveResult = Move-FileToBackupWithTransport -SourcePath $filePath -Confirm:$false
         

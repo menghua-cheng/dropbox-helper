@@ -24,7 +24,7 @@ The **Dropbox Camera Upload Auto-Offload Tool** solves a common problem: **keepi
 ### The Problem
 
 1. Your **iPhone** automatically uploads photos/videos to Dropbox Camera Uploads
-2. These files **sync** to your Windows computer  
+2. These files **sync** to your Windows computer
 3. But they **keep taking up** Dropbox storage quota
 4. Result: Your **Dropbox fills up** and you must manually delete files
 
@@ -39,14 +39,14 @@ This tool automatically:
 
 ### Key Benefits
 
-✅ **Never run out of Dropbox space** - Files moved after syncing  
-✅ **Complete backups** - All photos/videos safely stored  
-✅ **Set and forget** - Runs automatically in background  
-✅ **Safe and reliable** - File integrity validation  
-✅ **Flexible storage** - Local drives, NAS, or SSH/SCP remote  
-✅ **No cloud fees** - Your files, your storage, your control  
-✅ **Handles spaces in paths** - Works with any folder structure  
-✅ **Smart conflict resolution** - No file overwrites  
+✅ **Never run out of Dropbox space** - Files moved after syncing
+✅ **Complete backups** - All photos/videos safely stored
+✅ **Set and forget** - Runs automatically in background
+✅ **Safe and reliable** - File integrity validation
+✅ **Flexible storage** - Local drives, NAS, or SSH/SCP remote
+✅ **No cloud fees** - Your files, your storage, your control
+✅ **Handles spaces in paths** - Works with any folder structure
+✅ **Smart conflict resolution** - No file overwrites
 
 ### Key Features
 
@@ -120,7 +120,7 @@ Start-DropboxHelper -ShowProgress
 # Press Ctrl+C when done
 ```
 
-**Pros:** See real-time progress, test before installing  
+**Pros:** See real-time progress, test before installing
 **Cons:** Must keep PowerShell open, stops when closed
 
 ---
@@ -142,7 +142,7 @@ Get-ChildItem $config.DropboxCameraUploadsPath -Recurse -File |
     }
 ```
 
-**Pros:** Quick one-time operation, no monitoring overhead  
+**Pros:** Quick one-time operation, no monitoring overhead
 **Cons:** Must run manually, doesn't watch for new files
 
 ---
@@ -190,7 +190,7 @@ Show-Statistics
 - Logs to `%APPDATA%\DropboxHelper\logs`
 - Survives reboots
 
-**Pros:** Fully automatic, runs 24/7, professional service  
+**Pros:** Fully automatic, runs 24/7, professional service
 **Cons:** Requires admin to install, harder to debug
 
 ---
@@ -347,6 +347,7 @@ Configuration file: `%APPDATA%\DropboxHelper\config.json`
 | `MoveOrCopy` | Operation mode | `Move` |
 | `PreserveDirectoryStructure` | Keep folder structure | `true` |
 | `ConflictResolutionStrategy` | Handle duplicates | `Timestamp` |
+| `MinHoursBeforeMove` | Minimum hours after upload before moving | 48 |
 | `MaxLogAgeDays` | Log retention | 30 |
 | `RetryAttempts` | Retry on failure | 3 |
 | `RetryDelaySeconds` | Delay between retries | 5 |
@@ -442,10 +443,10 @@ For secure remote backup over SSH to Linux NAS or servers.
    ```powershell
    # Generate SSH key
    ssh-keygen -t rsa -b 4096 -f $env:USERPROFILE\.ssh\id_rsa
-   
+
    # Copy to remote server
    type $env:USERPROFILE\.ssh\id_rsa.pub | ssh user@192.168.1.100 "cat >> ~/.ssh/authorized_keys"
-   
+
    # Test connection
    ssh user@192.168.1.100 "echo 'SSH works!'"
    ```
@@ -814,6 +815,23 @@ Set-Configuration -Settings @{ MoveOrCopy = "Copy" } -Confirm:$false
 
 Note: Copy mode defeats the purpose of freeing Dropbox space.
 
+### Q: How long do photos stay in Dropbox before being moved?
+
+**A:** By default, 48 hours (2 days). This gives you time to access photos from other mobile devices. To change this:
+
+```powershell
+# Wait 1 week before moving
+Set-Configuration -Settings @{ MinHoursBeforeMove = 168 } -Confirm:$false
+
+# Move immediately after sync completes (0 hours)
+Set-Configuration -Settings @{ MinHoursBeforeMove = 0 } -Confirm:$false
+
+# Wait 24 hours (1 day)
+Set-Configuration -Settings @{ MinHoursBeforeMove = 24 } -Confirm:$false
+```
+
+Files are re-queued automatically and checked periodically until they reach the minimum age.
+
 ### Q: Can I run this on multiple computers?
 
 **A:** Yes, but:
@@ -853,7 +871,7 @@ Note: Copy mode defeats the purpose of freeing Dropbox space.
 
 ### Q: How do I pause temporarily?
 
-**A:** 
+**A:**
 ```powershell
 # If running as service:
 Stop-DropboxHelperTask
@@ -869,7 +887,7 @@ Start-DropboxHelperTask
 
 **A:** Fully supported! The tool automatically handles:
 - Spaces in filenames
-- Spaces in folder paths  
+- Spaces in folder paths
 - Special characters
 - Unicode characters
 
@@ -903,6 +921,29 @@ Set-Configuration -Settings @{
     CheckIntervalSeconds = 10
 } -Confirm:$false
 ```
+
+### Adjust Delay Before Moving
+
+Control how long photos stay in Dropbox after upload (useful for accessing from other devices):
+
+```powershell
+# Wait 7 days (168 hours) before moving
+Set-Configuration -Settings @{
+    MinHoursBeforeMove = 168
+} -Confirm:$false
+
+# Wait 12 hours before moving
+Set-Configuration -Settings @{
+    MinHoursBeforeMove = 12
+} -Confirm:$false
+
+# Move immediately after sync completes
+Set-Configuration -Settings @{
+    MinHoursBeforeMove = 0
+} -Confirm:$false
+```
+
+This is particularly useful if you need photos to be available on multiple devices for a period before they're archived.
 
 ### Process Specific File Types Only
 
@@ -1051,6 +1092,6 @@ Developed with ❤️ and PowerShell
 
 ---
 
-**Version:** 1.0.1  
-**Last Updated:** November 12, 2025  
+**Version:** 1.0.1
+**Last Updated:** November 12, 2025
 **Transport:** Local file system, Network shares (SMB), SSH/SCP

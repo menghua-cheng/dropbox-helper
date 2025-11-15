@@ -19,6 +19,7 @@
   "LogPath": "%APPDATA%\\DropboxHelper\\logs",
   "MoveOrCopy": "Move",
   "PreserveDirectoryStructure": true,
+  "MinHoursBeforeMove": 48,
   "MaxLogAgeDays": 30,
   "RetryAttempts": 3,
   "RetryDelaySeconds": 5,
