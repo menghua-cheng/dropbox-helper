@@ -179,6 +179,92 @@ function Get-Configuration {
 
 <#
 .SYNOPSIS
+    Displays current configuration in a formatted, organized way.
+.DESCRIPTION
+    Prints all configuration settings grouped by category for easy viewing.
+.EXAMPLE
+    Show-Configuration
+    Display all current configuration settings.
+#>
+function Show-Configuration {
+    [CmdletBinding()]
+    param()
+
+    try {
+        $config = Get-Configuration
+        if (-not $config) {
+            Write-Error "Unable to load configuration"
+            return
+        }
+
+        Write-Host "`n" -NoNewline
+        Write-Host ("=" * 70) -ForegroundColor Cyan
+        Write-Host "  Dropbox Helper Configuration" -ForegroundColor Cyan
+        Write-Host ("=" * 70) -ForegroundColor Cyan
+
+        # Source & Destination
+        Write-Host "`n[ Source & Destination ]" -ForegroundColor Yellow
+        Write-Host ("  Dropbox Path           : {0}" -f [System.Environment]::ExpandEnvironmentVariables($config.DropboxCameraUploadsPath)) -ForegroundColor White
+        Write-Host ("  Backup Destination     : {0}" -f [System.Environment]::ExpandEnvironmentVariables($config.BackupDestinationPath)) -ForegroundColor White
+        Write-Host ("  Preserve Folder Structure : {0}" -f $config.PreserveDirectoryStructure) -ForegroundColor White
+
+        # Transfer Settings
+        Write-Host "`n[ Transfer Settings ]" -ForegroundColor Yellow
+        Write-Host ("  Transport Method       : {0}" -f $config.TransportMethod) -ForegroundColor White
+        Write-Host ("  Operation Mode         : {0}" -f $config.MoveOrCopy) -ForegroundColor White
+        Write-Host ("  Conflict Resolution    : {0}" -f $config.ConflictResolutionStrategy) -ForegroundColor White
+
+        # Min Hours Before Move - show if set or use default
+        if ($config.PSObject.Properties.Name -contains 'MinHoursBeforeMove') {
+            Write-Host ("  Min Hours Before Move  : {0}h" -f $config.MinHoursBeforeMove) -ForegroundColor White
+        } else {
+            Write-Host ("  Min Hours Before Move  : 48h (default)" -f $config.MinHoursBeforeMove) -ForegroundColor Gray
+        }
+
+        # SSH/Remote Settings (if applicable)
+        if ($config.TransportMethod -eq 'SSH') {
+            Write-Host "`n[ SSH/Remote Settings ]" -ForegroundColor Yellow
+            Write-Host ("  SSH Host               : {0}" -f $config.SSHHost) -ForegroundColor White
+            Write-Host ("  SSH User               : {0}" -f $config.SSHUser) -ForegroundColor White
+            Write-Host ("  SSH Port               : {0}" -f $config.SSHPort) -ForegroundColor White
+            Write-Host ("  SSH Key Path           : {0}" -f $(if ($config.SSHKeyPath) { [System.Environment]::ExpandEnvironmentVariables($config.SSHKeyPath) } else { "(none)" })) -ForegroundColor White
+            Write-Host ("  SSH Remote Path        : {0}" -f $config.SSHRemotePath) -ForegroundColor White
+        }
+
+        # Timing & Monitoring
+        Write-Host "`n[ Timing & Monitoring ]" -ForegroundColor Yellow
+        Write-Host ("  File Stability Wait    : {0}s" -f $config.FileStabilityWaitSeconds) -ForegroundColor White
+        Write-Host ("  Check Interval         : {0}s" -f $config.CheckIntervalSeconds) -ForegroundColor White
+        Write-Host ("  Retry Attempts         : {0}" -f $config.RetryAttempts) -ForegroundColor White
+        Write-Host ("  Retry Delay            : {0}s" -f $config.RetryDelaySeconds) -ForegroundColor White
+
+        # File Types
+        Write-Host "`n[ File Types ]" -ForegroundColor Yellow
+        Write-Host ("  Supported Extensions   : {0}" -f ($config.SupportedExtensions -join ', ')) -ForegroundColor White
+
+        # Logging
+        Write-Host "`n[ Logging ]" -ForegroundColor Yellow
+        Write-Host ("  Logging Enabled        : {0}" -f $config.EnableLogging) -ForegroundColor White
+        Write-Host ("  Log Path               : {0}" -f [System.Environment]::ExpandEnvironmentVariables($config.LogPath)) -ForegroundColor White
+        Write-Host ("  Max Log Age            : {0} days" -f $config.MaxLogAgeDays) -ForegroundColor White
+
+        # Configuration File Location
+        Write-Host "`n[ Configuration File ]" -ForegroundColor Yellow
+        Write-Host ("  Location               : {0}" -f $script:ConfigPath) -ForegroundColor Gray
+
+        Write-Host ("=" * 70) -ForegroundColor Cyan
+        Write-Host ""
+
+        return $true
+    }
+    catch {
+        Write-Error "Failed to display configuration: $_"
+        return $false
+    }
+}
+
+<#
+.SYNOPSIS
     Updates configuration settings.
 .DESCRIPTION
     Updates one or more configuration properties and saves to file.
@@ -2848,6 +2934,51 @@ function Stop-DropboxHelperTask {
     catch {
         Write-Host "Failed to stop scheduled task: $_" -ForegroundColor Red
         Write-LogError "Failed to stop scheduled task: $_"
+        return $false
+    }
+}
+
+<#
+.SYNOPSIS
+    Restarts the Dropbox Helper scheduled task.
+.DESCRIPTION
+    Stops and then starts the scheduled task, applying any configuration changes.
+.EXAMPLE
+    Restart-DropboxHelperTask
+    Restart the scheduled task to apply config changes.
+#>
+function Restart-DropboxHelperTask {
+    [CmdletBinding()]
+    param()
+
+    try {
+        Write-Host "Restarting Dropbox Helper scheduled task..." -ForegroundColor Cyan
+
+        # Stop the task
+        $stopped = Stop-DropboxHelperTask
+        if (-not $stopped) {
+            Write-Host "Failed to stop task, cannot restart" -ForegroundColor Red
+            return $false
+        }
+
+        # Wait a moment for graceful shutdown
+        Start-Sleep -Seconds 2
+
+        # Start the task
+        $started = Start-DropboxHelperTask
+        if (-not $started) {
+            Write-Host "Failed to start task after stopping" -ForegroundColor Red
+            return $false
+        }
+
+        Write-Host "Scheduled task restarted successfully" -ForegroundColor Green
+        Write-LogInfo "Scheduled task restarted"
+
+        return $true
+    }
+    catch {
+        Write-Host "Failed to restart scheduled task: $_" -ForegroundColor Red
+        Write-LogError "Failed to restart scheduled task: $_"
         return $false
     }
 }
